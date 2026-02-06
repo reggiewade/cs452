@@ -1,9 +1,10 @@
 #include "freelist.h"
+#include "utils.h"
 
 
 extern FreeList freelistcreate(size_t size, int l, int u) {
     int i = l - u + 1;
-    void **freeList = mmalloc(i * sizeof(void **));
+    void **freeList = mmalloc(i * sizeof(void *));
 
     for (int j = 0; j < i; j++) {
         freeList[j] = NULL;
@@ -13,10 +14,10 @@ extern FreeList freelistcreate(size_t size, int l, int u) {
 
 extern void freelistdelete(FreeList f, int l, int u) {
     int i = l - u + 1;
-    mmfree((void **)f, i * sizeof(void **));
+    mmfree(f, i * sizeof(void *));
 }
 
-extern void freelistalloc(FreeList f, void *base, int e, int l) {
+extern void *freelistalloc(FreeList f, void *base, int e, int l) {
     if (base != NULL) {
         void **freeList = (void **)f;
         int index = l - e;

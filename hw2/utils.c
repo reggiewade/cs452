@@ -10,9 +10,6 @@ extern void mmfree(void *p, size_t size) {
     if (p) {
         munmap(p,size);
     }
-    else {
-        return NULL;
-    }
 }
 
 extern size_t divup(size_t n, size_t d) {
