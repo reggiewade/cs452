@@ -3,7 +3,7 @@
 
 
 extern FreeList freelistcreate(size_t size, int l, int u) {
-    int i = l - u + 1;
+    int i = u - l + 1;
     void **freeList = mmalloc(i * sizeof(void *));
 
     for (int j = 0; j < i; j++) {
@@ -13,14 +13,14 @@ extern FreeList freelistcreate(size_t size, int l, int u) {
 }
 
 extern void freelistdelete(FreeList f, int l, int u) {
-    int i = l - u + 1;
+    int i = u - l + 1;
     mmfree(f, i * sizeof(void *));
 }
 
 extern void *freelistalloc(FreeList f, void *base, int e, int l) {
     if (base != NULL) {
         void **freeList = (void **)f;
-        int index = l - e;
+        int index = e - l;
         freeList[index] = *(void **)base;
         return base;
     }
@@ -29,7 +29,7 @@ extern void *freelistalloc(FreeList f, void *base, int e, int l) {
 
 extern void freelistfree(FreeList f, void *base, void *mem, int e, int l) {
     void **freeList = (void **)f;
-    int index = l - e;
+    int index = e - l;
     if (base != NULL) {
         *(void **)mem = base;
         freeList[index] = mem;

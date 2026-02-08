@@ -12,6 +12,16 @@ typedef struct {
     BBM* bitmap;
 } BallocStruct;
 
+/**
+ * @brief Allocates a new buddy memory pool of the specified size and exponent range.
+ *
+ * The size must be a power of two, and the exponent range [l, u] must satisfy 0 <= l <= u and 2^u <= size.
+ *
+ * @param size Size of the memory pool.
+ * @param l Lower bound of the exponent range.
+ * @param u Upper bound of the exponent range.
+ * @return Balloc Pointer to the newly created buddy memory pool.
+ */
 extern Balloc bcreate(unsigned int size, int l, int u) {
     BallocStruct* b = (BallocStruct*)mmalloc(sizeof(BallocStruct));
     b->size = size;
@@ -29,6 +39,10 @@ extern Balloc bcreate(unsigned int size, int l, int u) {
     for (int i = l; i <= u; i++) {
         b->bitmap[i - l] = bbmcreate(size, i);
     }
+
+    // mark the entire memory as free in the bitmap
+    void** list = (void**)b->f;
+    freelistfree(b->f, NULL, b->base, b->u, b->l);
     return (Balloc) b;
 }
 
@@ -55,7 +69,7 @@ extern void *balloc(Balloc pool, unsigned int size) {
     for (int i = e + 1; i <= b->u; i++) {
         if (list[i] != NULL) {
             void* mem = freelistalloc(b->f, list[i], i, b->l);
-            bbmset(b->bitmap, b->base, mem, i);
+            bbmset(b->bitmap[i - b->l], b->base, mem, i);
             for (int j = i - 1; j >= e; j--) {
                 // flips the bit (e) to find the buddy
                 void* buddy = baddrinv(b->base, mem, j);
