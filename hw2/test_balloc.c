@@ -20,10 +20,12 @@ void test_basic_alloc_free() {
     void *ptr2 = balloc(pool, 64);
     assert(ptr2 != NULL);
     assert(bsize(pool, ptr2) >= 64);
+    bprint(pool);
     
     // Free the blocks
-    //bfree(pool, ptr1);
-    //bfree(pool, ptr2);
+    bfree(pool, ptr1);
+    bfree(pool, ptr2);
+    bprint(pool);
     
     bdelete(pool);
     printf("  PASSED\n");
