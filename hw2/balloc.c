@@ -73,8 +73,8 @@ extern void bdelete(Balloc pool) {
 extern void *balloc(Balloc pool, unsigned int size) {
     BallocStruct* b = (BallocStruct*)pool;
     int e = size2e(size);
-    if (e < b->l) return NULL;
-    if (e > b->u) e = b->u;
+    if (e < b->l) e = b->l;
+    if (e > b->u) return NULL;
     void** list = (void**)b->f;
 
     // initial check for free block at the desired level

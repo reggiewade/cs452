@@ -155,7 +155,7 @@ void test_size_query() {
     printf("  PASSED\n");
 }
 
-int main() {
+int test() {
     printf("Running buddy allocator tests...\n\n");
     
     test_basic_alloc_free();

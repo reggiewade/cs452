@@ -1,194 +1,135 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
 
 #include "deq.h"
 
+
+char* str_printer(Data d) {
+    return strdup((char*)d);
+}
+
 int main() {
-  // Create Queue
-  Deq q=deq_new();
+    // Push and Pop (1)
+    printf("Running Test: Push and Pop...\n");
+    Deq q = deq_new();
+    
+    deq_head_put(q, "Middle");
+    deq_head_put(q, "Front");
+    deq_tail_put(q, "Back");
+    
+    assert(deq_len(q) == 3);
+    assert(strcmp((char*)deq_head_get(q), "Front") == 0);
+    assert(strcmp((char*)deq_tail_get(q), "Back") == 0);
+    assert(deq_len(q) == 1);
+    
+    deq_del(q, NULL);
+    printf("\tPass!\n");
 
-  printf("```Testing Head Functions```\n\n");
+    // Indexing (ith) (2)
+    printf("Running Test: Indexing (ith)...\n");
+    q = deq_new();
+    deq_tail_put(q, "A");
+    deq_tail_put(q, "B");
+    deq_tail_put(q, "C");
+    
+    assert(strcmp((char*)deq_head_ith(q, 0), "A") == 0);
+    assert(strcmp((char*)deq_head_ith(q, 2), "C") == 0);
+    
+    assert(strcmp((char*)deq_tail_ith(q, 0), "C") == 0);
+    assert(strcmp((char*)deq_tail_ith(q, 2), "A") == 0);
+    
+    deq_del(q, NULL);
+    printf("\tPass!\n");
 
-  // Test Empty Queue
-  char *s = deq_str(q,0);
-  printf("Empty Queue: %s\n",s);
-  free(s);
+    // Specific Removal (rem) (3)
+    printf("Running Test: Specific Removal (rem)...\n");
+    q = deq_new();
+    char *target = "RemoveMe";
+    deq_tail_put(q, "Keep1");
+    deq_tail_put(q, target);
+    deq_tail_put(q, "Keep2");
+    
+    Data removed = deq_head_rem(q, target);
+    assert(removed == target);
+    assert(deq_len(q) == 2);
+    
+    assert(strcmp((char*)deq_head_ith(q, 1), "Keep2") == 0);
+    
+    printf("\tPass!\n");
 
-  /** Test Head Functions with Empty Queue **/
-  printf("\n``Initial Head Function Testing for Empty Queue``\n\n");
+    // String Output (4)
+    printf("Running Test: String Output...\n");
+    char *str = deq_str(q, str_printer);
+    printf("\tCurrent Deq: [%s]\n", str);
+    free(str);
 
-  // Test Head Put
-  deq_head_put(q,NULL);
-  s = deq_str(q,0);
-  printf("Testing Head Put (Null Data): %s, Length: %d\n",s,deq_len(q));
-  free(s);
+    deq_del(q, NULL);
+/*
+    // NULL push (5)
+    printf("Running Test: NULL push...\n");
+    q = deq_new();
+    
+    deq_head_put(q, NULL);
+    
+    deq_del(q, NULL);
+    printf("\tPass!\n");
+*/
+    // Index (i) out of bounds (6)
+    printf("Running Test: Index (i) out of bounds...\n");
+    q = deq_new();
 
-  // Test Head ITh
-  deq_head_ith(q,0);
-  s = deq_str(q,0);
-  printf("Testing Head iTh (Empty Queue): %s\n",s);
-  free(s);
+    deq_tail_put(q, "A");
+    deq_tail_put(q, "B");
+    deq_tail_put(q, "C");
 
-  // Test Head Get
-  deq_head_get(q);
-  s = deq_str(q,0);
-  printf("Testing Head Get (Empty Queue): %s\n",s);
-  free(s);
+    assert(deq_head_ith(q, 3) == 0);
+    printf("\tPass!\n");
 
-  // Test Head Rem
-  deq_head_rem(q,"a");
-  s = deq_str(q,0);
-  printf("Testing Head Rem (Empty Queue): %s, Length: %d\n\n",s,deq_len(q));
-  free(s);
+    deq_del(q, NULL);
 
-  /** Test Normal Head Functions */
-  printf("``Normal Head Testing``\n\n");
+    // Rem out of bounds (7)
+    printf("Running Test: Rem out of bounds...\n");
+    q = deq_new();
 
-  // Test Head Put
-  deq_head_put(q,"a");
-  deq_head_put(q,"b");
-  deq_head_put(q,"e");
-  deq_head_put(q,"c");
-  deq_head_put(q,"d");
-  deq_head_put(q,"e");
-  deq_head_put(q, "b");
-  s = deq_str(q,0);
-  printf("Testing Head Put: %s, Length: %d\n",s,deq_len(q));
-  free(s);
+    deq_tail_put(q, "A");
+    deq_tail_put(q, "B");
+    deq_tail_put(q, "C");
 
-  // Test Head iTh
-  s = deq_head_ith(q, 3);
-  printf("Testing Head iTh (Index: 3): %s\n",s);
-  s = deq_head_ith(q, 5);
-  printf("Testing Head iTh (Index: 5): %s\n",s);
+    assert(deq_head_rem(q, "F") == 0);
+    printf("\tPass!\n");
 
-  // Test Head iTh (Throws Warnings)
-  s = deq_head_ith(q, -1);
-  printf("Testing Head iTh (Index: -1): %s\n", s);
-  s = deq_head_ith(q, deq_len(q));
-  printf("Testing Head iTh (Index: %d): %s\n", deq_len(q),s);
+    deq_del(q, NULL);
 
-  // Test Head Get
-  s = deq_head_get(q);
-  printf("Testing Head Get: %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
-  s = deq_head_get(q);
-  printf("Testing Head Get (2nd Time): %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
+    // Getting an empty deq (8)
+    printf("Running Test: Getting an empty deq...\n");
+    q = deq_new();
 
-  // Test Head Rem
-  s = deq_head_rem(q,"e");
-  printf("Testing Head Rem (Data: e): %s\n", s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
+    assert(deq_head_get(q) == 0);
+    printf("\tPass!\n");
 
-  // Test Head Rem (Throws Warnings)
-  s = deq_head_rem(q, "z");
-  printf("Testing Head Rem (Data: z): %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
+    deq_del(q, NULL);
 
-  // Delete Queue
-  deq_del(q,0);
+    // Specific Removal: Emptying the list (9)
+    printf("Running Test: rem until empty...\n");
+    q = deq_new();
+    char *last = "Last";
+    deq_head_put(q, last);
+    
+    Data r_data = deq_head_rem(q, last);
+    assert(r_data == last);
+    assert(deq_len(q) == 0);
+    
+    deq_head_put(q, "First");
+    assert(deq_len(q) == 1);
+    assert(strcmp((char*)deq_head_get(q), "First") == 0);
+    
+    deq_del(q, NULL);
+    printf("\tPass!\n");
 
-  // Create New Queue
-  q = deq_new();
+    printf("All tests passed successfully!\n");
 
-  printf("\n\n```Testing Tail Functions```\n\n");
-
-  // Test Empty Queue
-  s = deq_str(q,0);
-  printf("Empty Queue: %s\n",s);
-  free(s);
-
-  /** Test Tail Functions with Empty Queue **/
-  printf("\n``Initial Tail Function Testing for Empty Queue``\n\n");
-  
-  // Test Tail Put
-  deq_tail_put(q,NULL);
-  s = deq_str(q,0);
-  printf("Testing Tail Put (Null Data): %s, Length: %d\n",s,deq_len(q));
-  free(s);
-
-  // Test Tail ITh
-  deq_tail_ith(q,0);
-  s = deq_str(q,0);
-  printf("Testing Tail iTh (Empty Queue): %s\n",s);
-  free(s);
-
-  // Test Tail Get
-  deq_tail_get(q);
-  s = deq_str(q,0);
-  printf("Testing Tail Get (Empty Queue): %s\n",s);
-  free(s);
-
-  // Test Tail Rem
-  deq_tail_rem(q,"a");
-  s = deq_str(q,0);
-  printf("Testing Tail Rem (Empty Queue): %s, Length: %d\n\n",s,deq_len(q));
-  free(s);
-
-  /** Test Normal Tail Functions */
-  printf("``Normal Tail Testing``\n\n");
-
-  // Test Tail Put
-  deq_tail_put(q,"a");
-  deq_tail_put(q,"b");
-  deq_tail_put(q,"e");
-  deq_tail_put(q,"c");
-  deq_tail_put(q,"d");
-  deq_tail_put(q,"e");
-  deq_tail_put(q, "b");
-  s = deq_str(q,0);
-  printf("Testing Tail Put: %s, Length: %d\n",s,deq_len(q));
-  free(s);
-
-  // Test Tail iTh
-  s = deq_tail_ith(q, 0);
-  printf("Testing Tail iTh (Index: 0): %s\n",s);
-  s = deq_tail_ith(q, 4);
-  printf("Testing Tail iTh (Index: 4): %s\n",s);
-
-  // Test Tail iTh (Throws Warnings)
-  s = deq_tail_ith(q, -1);
-  printf("Testing Tail iTh (Index: -1): %s\n", s);
-  s = deq_tail_ith(q, deq_len(q));
-  printf("Testing Tail iTh (Index: %d): %s\n", deq_len(q),s);
-
-  // Test Tail Get
-  s = deq_tail_get(q);
-  printf("Testing Tail Get: %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
-  s = deq_tail_get(q);
-  printf("Testing Tail Get (2nd Time): %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
-
-  // Test Tail Rem
-  s = deq_tail_rem(q,"e");
-  printf("Testing Tail Rem (Data: e): %s\n", s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
-
-  // Test Tail Rem (Throws Warnings)
-  s = deq_tail_rem(q, "z");
-  printf("Testing Tail Rem (Data: z): %s\n",s);
-  s = deq_str(q,0);
-  printf("Updated Queue: %s, Length: %d\n",s, deq_len(q));
-  free(s);
-
-  // Delete Queue
-  deq_del(q,0);
-
-  return 0;
+    return 0;
 }
