@@ -17,11 +17,9 @@ void test_basic_alloc_free() {
     void *ptr2 = balloc(pool, 64);
     assert(ptr2 != NULL);
     assert(bsize(pool, ptr2) >= 64);
-    bprint(pool);
     
     bfree(pool, ptr1);
     bfree(pool, ptr2);
-    bprint(pool);
     
     bdelete(pool);
     printf("  PASSED\n");
@@ -140,7 +138,28 @@ void test_size_query() {
     printf("  PASSED\n");
 }
 
-int test() {
+void test_print_statement() {
+    printf("Test: Print statement for debugging\n");
+    
+    Balloc pool = bcreate(4096, 4, 12);
+    assert(pool != NULL);
+    
+    void *ptr1 = balloc(pool, 64);
+    void *ptr2 = balloc(pool, 128);
+    assert(ptr1 != NULL && ptr2 != NULL);
+    
+    printf("  Current state of buddy allocator:\n");
+    bprint(pool);
+    
+    bfree(pool, ptr1);
+    bfree(pool, ptr2);
+    printf("  State after freeing blocks:\n");
+    bprint(pool);
+    bdelete(pool);
+    printf("  PASSED\n");
+}
+
+int main() {
     printf("Running buddy allocator tests...\n\n");
     
     test_basic_alloc_free();
@@ -149,6 +168,7 @@ int test() {
     test_buddy_coalescing();
     test_reuse_after_free();
     test_size_query();
+    test_print_statement();
     
     printf("\nAll tests passed!\n");
     return 0;
