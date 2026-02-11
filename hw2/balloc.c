@@ -113,27 +113,23 @@ extern void bfree(Balloc pool, void *mem) {
     if (s == 0) return;
     size_t e = size2e(s);
 
-    // Try to coalesce upwards 
     for (int i = e; i < b->u; i++) {
         void* buddy = baddrinv(b->base, mem, i);
         int idx = i - b->l;
 
-        // INLINE SEARCH: Check if buddy is in the free list at this level.
-        // We traverse the linked list manually.
         void* curr = list[idx];
         void* prev = NULL;
         int found = 0;
 
         while (curr != NULL) {
             if (curr == buddy) {
-                // Found the buddy! Remove it from the list.
-                // The list is singly linked; 'curr' points to the next node.
+                // if buddy is found in the free list, remove it
                 void* next = *(void**)curr; 
                 
                 if (prev == NULL) {
-                    list[idx] = next; // Update head
+                    list[idx] = next;
                 } else {
-                    *(void**)prev = next; // Update prev's next
+                    *(void**)prev = next;
                 }
                 found = 1;
                 break;
@@ -142,24 +138,17 @@ extern void bfree(Balloc pool, void *mem) {
             curr = *(void**)curr;
         }
 
+        // if buddy is found, clear the bitmap and move up to the next level; otherwise, add the block to the free list and return
         if (found) {
-            // Buddy was free and we removed it. Merge!
-            // Mark this level as UNSPLIT (0)
             bbmclr(b->bitmap[idx], b->base, mem, i);
 
-            // Move up to the next level
             mem = baddrclr(b->base, mem, i);
             
-            // Continue loop to try merging at i+1
         } else {
-            // Buddy is not free. Stop merging.
-            // Add current block to free list and return.
             freelistfree(b->f, list[idx], mem, i, b->l);
             return;
         }
     }
-
-    // If we merge all the way to the top (u), add it to the u-list
     freelistfree(b->f, list[b->u - b->l], mem, b->u, b->l);
 }
 

@@ -7,22 +7,18 @@
 void test_basic_alloc_free() {
     printf("Test: Basic allocation and freeing\n");
     
-    // Create a pool: 4KB with exponent range [4, 12]
     Balloc pool = bcreate(4096, 4, 12);
     assert(pool != NULL);
     
-    // Allocate a small block
     void *ptr1 = balloc(pool, 32);
     assert(ptr1 != NULL);
     assert(bsize(pool, ptr1) >= 32);
     
-    // Allocate another block
     void *ptr2 = balloc(pool, 64);
     assert(ptr2 != NULL);
     assert(bsize(pool, ptr2) >= 64);
     bprint(pool);
     
-    // Free the blocks
     bfree(pool, ptr1);
     bfree(pool, ptr2);
     bprint(pool);
@@ -32,12 +28,11 @@ void test_basic_alloc_free() {
 }
 
 void test_multiple_allocations() {
-    printf("Test: Multiple sequential allocations\n");
+    printf("Test: Multiple sequential allocations and freeing\n");
     
     Balloc pool = bcreate(4096, 4, 12);
     assert(pool != NULL);
     
-    // Allocate multiple blocks of different sizes
     void *ptrs[10];
     int sizes[] = {16, 32, 64, 128, 256, 512, 100, 200, 300, 400};
     
@@ -48,12 +43,10 @@ void test_multiple_allocations() {
         printf("  Allocated %d bytes, got %u bytes\n", sizes[i], allocated_size);
     }
     
-    // Free all blocks
     for (int i = 0; i < 10; i++) {
         bfree(pool, ptrs[i]);
     }
     
-    //bdelete(pool);
     printf("  PASSED\n");
 }
 
@@ -63,14 +56,12 @@ void test_allocation_with_data() {
     Balloc pool = bcreate(4096, 4, 12);
     assert(pool != NULL);
     
-    // Allocate and write data
     void *ptr = balloc(pool, 256);
     assert(ptr != NULL);
     
     const char *test_str = "Hello, buddy allocator!";
     strcpy((char*)ptr, test_str);
     
-    // Verify data is intact
     assert(strcmp((char*)ptr, test_str) == 0);
     printf("  Stored and retrieved: \"%s\"\n", (char*)ptr);
     
@@ -85,7 +76,6 @@ void test_buddy_coalescing() {
     Balloc pool = bcreate(4096, 4, 12);
     assert(pool != NULL);
     
-    // Allocate two adjacent buddies
     void *ptr1 = balloc(pool, 128);
     void *ptr2 = balloc(pool, 128);
     assert(ptr1 != NULL && ptr2 != NULL);
@@ -94,12 +84,10 @@ void test_buddy_coalescing() {
     unsigned int size2 = bsize(pool, ptr2);
     printf("  Allocated two 128-byte blocks: sizes %u and %u\n", size1, size2);
     
-    // Free both - should trigger coalescing
     bfree(pool, ptr1);
     bfree(pool, ptr2);
     printf("  Freed both blocks (coalescing should occur)\n");
     
-    // Allocate a larger block to verify coalescing worked
     void *ptr3 = balloc(pool, 256);
     assert(ptr3 != NULL);
     printf("  Successfully allocated larger block after coalescing\n");
@@ -120,12 +108,9 @@ void test_reuse_after_free() {
     assert(ptr1 != NULL);
     bfree(pool, ptr1);
     
-    // Allocate again - should reuse the memory
     void *ptr2 = balloc(pool, 64);
     assert(ptr2 != NULL);
-    
-    // They might not be the same address due to buddy splitting,
-    // but we should be able to allocate again
+
     printf("  First allocation: %p\n", ptr1);
     printf("  Second allocation: %p\n", ptr2);
     

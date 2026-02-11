@@ -2,6 +2,14 @@
 #include "bm.h"
 #include "utils.h"
 
+
+/* 
+* Wrapper functions for the bitmap used in the buddy allocator. These functions translate between 
+* memory addresses and bitmap indices, allowing the buddy allocator to manage free blocks of
+* memory efficiently.  Calls functions in bm.c to manipulate the bitmap, while providing an 
+* interface that is specific to the needs of the buddy allocator.
+*/
+
 static size_t mapsize(size_t size, int e) {
   size_t blocksize=e2size(e);
   size_t blocks=divup(size,blocksize);
