@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <readline/history.h>
 
 #include "Command.h"
 #include "error.h"
@@ -49,8 +50,22 @@ BIDEFN(cd) {
     owd=cwd;
     cwd=strdup(r->argv[1]);
   }
-  if (cwd && chdir(cwd))
-    ERROR("chdir() failed"); // warn
+  if (cwd && chdir(cwd) == 0) {
+    free(cwd);
+    cwd = getcwd(0,0);
+  }
+  else {
+    WARN("The specified directory does not exist or is inaccessible"); // warn
+  }
+    
+}
+
+BIDEFN(history) {
+  builtin_args(r,0);
+  HIST_ENTRY **entries=history_list();
+  if (entries)
+    for (int i=0; entries[i]; i++)
+      printf("%d: %s\n",i+history_base,entries[i]->line);
 }
 
 static int builtin(BIARGS) {
@@ -62,6 +77,7 @@ static int builtin(BIARGS) {
     BIENTRY(exit),
     BIENTRY(pwd),
     BIENTRY(cd),
+    BIENTRY(history),
     {0,0}
   };
   int i;
@@ -126,6 +142,15 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     ERROR("fork() failed");
   if (pid==0)
     child(r,fg);
+  else {
+    if (fg) {
+      int status;
+      waitpid(pid,&status,0);
+    }
+    else {
+      printf("[%d] %d\n", size(jobs), pid);
+    }
+  }
 }
 
 extern void freeCommand(Command command) {
