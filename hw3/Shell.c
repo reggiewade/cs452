@@ -26,6 +26,7 @@ int main() {
   }
   
   while (!eof) {
+    reapJobs(jobs);
     char *line=readline(prompt);
     if (!line)
       break;

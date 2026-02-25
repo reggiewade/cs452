@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/wait.h>
 #include <readline/history.h>
 
 #include "Command.h"
@@ -30,6 +31,7 @@ static void builtin_args(CommandRep r, int n) {
 BIDEFN(exit) {
   builtin_args(r,0);
   *eof=1;
+  freeJobs(jobs);
 }
 
 BIDEFN(pwd) {
@@ -118,37 +120,53 @@ extern Command newCommand(T_words words) {
   return r;
 }
 
-static void child(CommandRep r, int fg) {
+static void child(CommandRep r, int fg, int in_fd, int out_fd) {
   int eof=0;
-  Jobs jobs=newJobs();
-  if (builtin(r,&eof,jobs))
-    return;
-  execvp(r->argv[0],r->argv);
-  ERROR("execvp() failed");
-  exit(0);
-}
+  Jobs jobs=newJobs(); 
+  
+  if (in_fd != STDIN_FILENO) {
+    dup2(in_fd, STDIN_FILENO);
+    close(in_fd);
+  }
+  
+  if (out_fd != STDOUT_FILENO) {
+    dup2(out_fd, STDOUT_FILENO);
+    close(out_fd);
+  }
 
+  if (builtin(r,&eof,jobs)) {
+    exit(0); 
+  }
+  
+  execvp(r->argv[0],r->argv);
+  
+  ERROR("execvp() failed");
+  exit(1);
+}
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
-			int *jobbed, int *eof, int fg) {
+      int *jobbed, int *eof, int fg, int in_fd, int out_fd) {
+      
   CommandRep r=command;
-  if (fg && builtin(r,eof,jobs))
+  
+  if (fg && sizePipeline(pipeline) <= 1 && builtin(r,eof,jobs))
     return;
+    
   if (!*jobbed) {
     *jobbed=1;
     addJobs(jobs,pipeline);
   }
+  
   int pid=fork();
   if (pid==-1)
     ERROR("fork() failed");
-  if (pid==0)
-    child(r,fg);
+    
+  if (pid==0) {
+    child(r, fg, in_fd, out_fd); 
+  }
   else {
-    if (fg) {
-      int status;
-      waitpid(pid,&status,0);
-    }
-    else {
-      printf("[%d] %d\n", size(jobs), pid);
+    if (!fg) {
+      setPipelinePid(pipeline,pid);
+      printf("[%d] %d\n", sizeJobs(jobs), pid);
     }
   }
 }

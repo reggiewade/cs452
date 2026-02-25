@@ -11,6 +11,7 @@
 typedef struct {
   Deq processes;
   int fg;			// not "&"
+  pid_t pid;			// for job control
 } *PipelineRep;
 
 extern Pipeline newPipeline(int fg) {
@@ -33,9 +34,37 @@ extern int sizePipeline(Pipeline pipeline) {
 }
 
 static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
-  PipelineRep r=(PipelineRep)pipeline;
-  for (int i=0; i<sizePipeline(r) && !*eof; i++)
-    execCommand(deq_head_ith(r->processes,i),pipeline,jobs,jobbed,eof,1);
+  PipelineRep r = (PipelineRep)pipeline;
+  int num_cmds = sizePipeline(r);
+  
+  int prev_fd = STDIN_FILENO;
+  int fd[2];
+
+  for (int i = 0; i < num_cmds && !*eof; i++) {
+    int is_last = (i == num_cmds - 1);
+    int out_fd = STDOUT_FILENO;
+
+    if (!is_last) {
+      if (pipe(fd) == -1) ERROR("pipe() failed");
+      out_fd = fd[1];
+    }
+
+    execCommand(deq_head_ith(r->processes, i), pipeline, jobs, jobbed, eof, r->fg, prev_fd, out_fd);
+
+    if (prev_fd != STDIN_FILENO) {
+      close(prev_fd);
+    }
+    if (!is_last) {
+      close(fd[1]);
+      prev_fd = fd[0];
+    }
+  }
+
+  if (r->fg) {
+      for (int i = 0; i < num_cmds; i++) {
+          wait(NULL); 
+      }
+  }
 }
 
 extern void execPipeline(Pipeline pipeline, Jobs jobs, int *eof) {
@@ -49,4 +78,12 @@ extern void freePipeline(Pipeline pipeline) {
   PipelineRep r=(PipelineRep)pipeline;
   deq_del(r->processes,freeCommand);
   free(r);
+}
+
+extern void setPipelinePid(Pipeline pipeline, pid_t pid) {
+  ((PipelineRep)pipeline)->pid=pid;
+}
+
+extern pid_t getPipelinePid(Pipeline pipeline) {
+  return ((PipelineRep)pipeline)->pid;
 }
