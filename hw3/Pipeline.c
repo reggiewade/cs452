@@ -19,6 +19,7 @@ extern Pipeline newPipeline(int fg) {
   if (!r)
     ERROR("malloc() failed");
   r->processes=deq_new();
+  r->pid=0;
   r->fg=fg;
   return r;
 }

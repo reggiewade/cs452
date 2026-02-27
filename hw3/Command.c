@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <readline/history.h>
+#include <fcntl.h>
 
 #include "Command.h"
 #include "error.h"
@@ -11,6 +12,8 @@
 typedef struct {
   char *file;
   char **argv;
+  char *infile;
+  char *outfile;
 } *CommandRep;
 
 #define BIARGS CommandRep r, int *eof, Jobs jobs
@@ -111,12 +114,14 @@ static char **getargs(T_words words) {
   return argv;
 }
 
-extern Command newCommand(T_words words) {
+extern Command newCommand(T_words words, char* infile, char* outfile) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
     ERROR("malloc() failed");
   r->argv=getargs(words);
   r->file=r->argv[0];
+  r->infile = infile ? strdup(infile) : NULL;
+  r->outfile = outfile ? strdup(outfile) : NULL;
   return r;
 }
 
@@ -124,12 +129,25 @@ static void child(CommandRep r, int fg, int in_fd, int out_fd) {
   int eof=0;
   Jobs jobs=newJobs(); 
   
-  if (in_fd != STDIN_FILENO) {
+  // Handle Input Redirection overrides
+  if (r->infile) {
+    int fd = open(r->infile, O_RDONLY);
+    if (fd < 0) { ERROR("Failed to open input file"); exit(1); }
+    dup2(fd, STDIN_FILENO);
+    close(fd);
+  } else if (in_fd != STDIN_FILENO) {
     dup2(in_fd, STDIN_FILENO);
     close(in_fd);
   }
   
-  if (out_fd != STDOUT_FILENO) {
+  // Handle Output Redirection overrides
+  if (r->outfile) {
+    // Open for writing, create if it doesn't exist, truncate if it does. Permissions 0644.
+    int fd = open(r->outfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) { ERROR("Failed to open output file"); exit(1); }
+    dup2(fd, STDOUT_FILENO);
+    close(fd);
+  } else if (out_fd != STDOUT_FILENO) {
     dup2(out_fd, STDOUT_FILENO);
     close(out_fd);
   }
@@ -143,6 +161,7 @@ static void child(CommandRep r, int fg, int in_fd, int out_fd) {
   ERROR("execvp() failed");
   exit(1);
 }
+
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
       int *jobbed, int *eof, int fg, int in_fd, int out_fd) {
       
@@ -151,9 +170,9 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
   if (fg && sizePipeline(pipeline) <= 1 && builtin(r,eof,jobs))
     return;
     
-  if (!*jobbed) {
-    *jobbed=1;
-    addJobs(jobs,pipeline);
+  if (!fg && !*jobbed) {
+      *jobbed=1;
+      addJobs(jobs,pipeline);
   }
   
   int pid=fork();
@@ -164,8 +183,8 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     child(r, fg, in_fd, out_fd); 
   }
   else {
+    setPipelinePid(pipeline,pid);
     if (!fg) {
-      setPipelinePid(pipeline,pid);
       printf("[%d] %d\n", sizeJobs(jobs), pid);
     }
   }
@@ -177,6 +196,8 @@ extern void freeCommand(Command command) {
   while (*argv)
     free(*argv++);
   free(r->argv);
+  if (r->infile) free(r->infile);
+  if (r->outfile) free(r->outfile);
   free(r);
 }
 

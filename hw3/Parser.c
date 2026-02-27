@@ -39,7 +39,7 @@ static T_words p_words() {
     return 0;
   T_words words=new_words();
   words->word=word;
-  if (cmp("|") || cmp("&") || cmp(";"))
+  if (cmp("|") || cmp("&") || cmp(";") || cmp("<") || cmp(">"))
     return words;
   words->words=p_words();
   return words;
@@ -52,6 +52,15 @@ static T_command p_command() {
     return 0;
   T_command command=new_command();
   command->words=words;
+
+  while (cmp("<") || cmp(">")) {
+    if (eat("<")) {
+      command->infile = p_word();
+    } else if (eat(">")) {
+      command->outfile = p_word();
+    }
+  }
+
   return command;
 }
 
@@ -116,8 +125,10 @@ static void f_words(T_words t) {
 
 static void f_command(T_command t) {
   if (!t)
-    return;
+      return;
   f_words(t->words);
+  if (t->infile) f_word(t->infile);
+  if (t->outfile) f_word(t->outfile);
   free(t);
 }
 

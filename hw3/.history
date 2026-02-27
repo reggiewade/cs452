@@ -55,3 +55,39 @@ exit
 cat deq.h | wc
 cat deq.h &
 exit
+pwd & pwd
+pwd & pwd &
+pwd & pwd &
+exit
+[200~pwd & cd /etc & pwd~
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+exit
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+cat deq.h
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+exit
+pwd & cd /etc & pwd
+pwd & cd /etc & pwd
+exit
+sleep 10 &
+pwd &
+pwd &
+pwd &
+exiit
+exit
+cat < test_input.txt > test_output.txt
+cat test_output.txt
+exit

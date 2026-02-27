@@ -15,8 +15,11 @@ static Command i_command(T_command t) {
   if (!t)
     return 0;
   Command command=0;
-  if (t->words)
-    command=newCommand(t->words);
+  if (t->words) {
+    char *in = t->infile ? t->infile->s : NULL;
+    char *out = t->outfile ? t->outfile->s : NULL;
+    command=newCommand(t->words, in, out);
+  }
   return command;
 }
 
