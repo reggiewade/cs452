@@ -24,6 +24,13 @@ typedef struct {
 static char *owd=0;
 static char *cwd=0;
 
+/**
+ * Check that the number of arguments to a builtin command is correct.
+ *
+ * @param r the representation of the command
+ * @param n the expected number of arguments
+ * If the number of arguments is not correct, print an error message.
+ */
 static void builtin_args(CommandRep r, int n) {
   char **argv=r->argv;
   for (n++; *argv++; n--);
@@ -73,6 +80,13 @@ BIDEFN(history) {
       printf("%d: %s\n",i+history_base,entries[i]->line);
 }
 
+/**
+ * Check if the given command is a builtin command, and if so, execute it.
+ * @param r the representation of the command
+ * @param eof pointer to an integer indicating whether the shell should exit
+ * @param jobs the jobs data structure
+ * @return 1 if the command is a builtin, 0 otherwise
+ */
 static int builtin(BIARGS) {
   typedef struct {
     char *s;
@@ -114,6 +128,14 @@ static char **getargs(T_words words) {
   return argv;
 }
 
+/**
+ * Create a new Command object.
+ *
+ * @param words the words of the command
+ * @param infile the input file of the command (or NULL if none)
+ * @param outfile the output file of the command (or NULL if none)
+ * @return a newly created Command object
+ */
 extern Command newCommand(T_words words, char* infile, char* outfile) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
@@ -125,6 +147,17 @@ extern Command newCommand(T_words words, char* infile, char* outfile) {
   return r;
 }
 
+/**
+ * Fork and execute a command in a child process.
+ * Handles input/output redirection properly.
+ * If the command is a builtin, execute it in the parent process and return.
+ * If the command is not a builtin, execute it in the child process.
+ *
+ * @param r the representation of the command to execute
+ * @param fg whether the command is being executed in the foreground
+ * @param in_fd the input file descriptor to use for the command
+ * @param out_fd the output file descriptor to use for the command
+ */
 static void child(CommandRep r, int fg, int in_fd, int out_fd) {
   int eof=0;
   Jobs jobs=newJobs(); 
@@ -162,6 +195,25 @@ static void child(CommandRep r, int fg, int in_fd, int out_fd) {
   exit(1);
 }
 
+/**
+ * Execute a command, handling job control and redirection.
+ *
+ * If the command is not a builtin and the pipeline is empty, the command is executed
+ * in the foreground. Otherwise, it is executed in the background and added to the jobs list.
+ *
+ * If the command is a builtin, it is executed directly and not added to the jobs list.
+ *
+ * Redirection is handled by overriding the standard input and output file descriptors.
+ *
+ * @param command the command to execute
+ * @param pipeline the pipeline to add the command to, if it is not a builtin
+ * @param jobs the jobs data structure
+ * @param jobbed pointer to an integer indicating whether the command was added to the jobs list
+ * @param eof pointer to an integer indicating whether the shell should exit
+ * @param fg whether the command should be executed in the foreground
+ * @param in_fd the input file descriptor to use for the command
+ * @param out_fd the output file descriptor to use for the command
+ */
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
       int *jobbed, int *eof, int fg, int in_fd, int out_fd) {
       
@@ -190,6 +242,11 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
   }
 }
 
+/**
+ * Frees all memory allocated for a Command object.
+ *
+ * @param command the Command object to free
+ */
 extern void freeCommand(Command command) {
   CommandRep r=command;
   char **argv=r->argv;
@@ -201,6 +258,9 @@ extern void freeCommand(Command command) {
   free(r);
 }
 
+/**
+ * Frees the memory allocated for the current and old working directories.
+ */
 extern void freestateCommand() {
   if (cwd) free(cwd);
   if (owd) free(owd);

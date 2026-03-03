@@ -13,7 +13,7 @@
 
 int main() {
   int eof=0;
-  Jobs jobs=newJobs();
+  Jobs jobs=newJobs();    // reap the jobs list at the start of each loop iteration to avoid zombies
   char *prompt=0;
 
   if (isatty(fileno(stdin))) {

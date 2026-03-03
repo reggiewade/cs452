@@ -24,6 +24,11 @@ extern Pipeline newPipeline(int fg) {
   return r;
 }
 
+/**
+ * Add a command to the end of the pipeline.
+ * @param pipeline the pipeline to add to
+ * @param command the command to add
+ */
 extern void addPipeline(Pipeline pipeline, Command command) {
   PipelineRep r=(PipelineRep)pipeline;
   deq_tail_put(r->processes,command);
@@ -34,6 +39,19 @@ extern int sizePipeline(Pipeline pipeline) {
   return deq_len(r->processes);
 }
 
+/**
+ * Execute a pipeline of commands.
+ * 
+ * This function executes each command in the pipeline in order.
+ * If the pipeline is not in the foreground, this function will return
+ * immediately after starting the first command. Otherwise, it will wait
+ * for each command to finish before starting the next one.
+ * 
+ * @param pipeline the pipeline of commands to execute
+ * @param jobs the jobs list to add the commands to
+ * @param jobbed a pointer to an integer indicating whether the command is running in the background
+ * @param eof a pointer to an integer indicating whether the shell should exit
+ */
 static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
   PipelineRep r = (PipelineRep)pipeline;
   int num_cmds = sizePipeline(r);

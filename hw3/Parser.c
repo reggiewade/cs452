@@ -33,18 +33,32 @@ static T_word p_word() {
   return word;
 }
 
+/**
+ * Parse a sequence of words from the input.
+ *
+ * @return a T_words object containing the parsed sequence of words
+ */
 static T_words p_words() {
   T_word word=p_word();
   if (!word)
     return 0;
   T_words words=new_words();
   words->word=word;
-  if (cmp("|") || cmp("&") || cmp(";") || cmp("<") || cmp(">"))
+  if (cmp("|") || cmp("&") || cmp(";") || cmp("<") || cmp(">")) //add support for redirection
     return words;
   words->words=p_words();
   return words;
 }
 
+/**
+ * Parse a command from the input.
+ *
+ * A command consists of a sequence of words, followed by an optional redirection
+ * (either "<" or ">"). If the redirection operator is present, it is followed by a
+ * single word which is the filename to redirect to.
+ *
+ * @return a T_command object containing the parsed command
+ */
 static T_command p_command() {
   T_words words=0;
   words=p_words();

@@ -20,6 +20,14 @@ extern void freeJobs(Jobs jobs) {
   deq_del(jobs,freePipeline);
 }
 
+/**
+ * Reap the jobs in the jobs list.
+ *
+ * Iterate through the jobs list and wait for each process to finish.
+ * If a process has finished, remove it from the jobs list and free its memory.
+ * 
+ * @param jobs the jobs list to reap
+ */
 extern void reapJobs(Jobs jobs) {
     int i = 0;
     while (i < deq_len(jobs)) {
