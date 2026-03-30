@@ -4,26 +4,36 @@
 #include <time.h>
 #include <pthread.h>
 
-#include "wrapper.h"      // Use the MT-safe wrapper header
+#include "wrapper.h"
 #include "lawn.h"
 #include "mole.h"
 #include "thread.h" 
 
-// Updated produce to use Mtq
+/**
+ * @brief Creates and queues a new mole
+ * 
+ * @param a An array of arguments, where a[0] is the Mtq queue and a[1] is the Lawn.
+ *
+ */
 static void *produce(void *a) {
   void **arg = a;
-  Mtq q = (Mtq)arg[0]; // Cast to Mtq type
-  Lawn l = (Lawn)arg[1];
-  mtq_tail_put(q, mole_new(l, 0, 0)); // Call wrapper function
+  Mtq queue = (Mtq)arg[0];
+  Lawn lawn = (Lawn)arg[1];
+  mtq_tail_put(queue, mole_new(lawn, 0, 0));
   return 0;
 }
 
-// Updated consume to use Mtq
+/**
+ * @brief Consumes a mole from the queue and whacks it
+ * 
+ * @param a An array of arguments, where a[0] is the Mtq queue and a[1] is the Lawn.
+ *
+ */
 static void *consume(void *a) {
   void **arg = a;
-  Mtq q = (Mtq)arg[0]; // Cast to Mtq type
+  Mtq queue = (Mtq)arg[0];
   
-  Mole m = mtq_head_get(q); // Call wrapper function
+  Mole m = mtq_head_get(queue);
   if (m) {
     mole_whack(m);
   }
@@ -33,24 +43,20 @@ static void *consume(void *a) {
 int main() {
   srandom(time(0));
   const int n = 10;
-  const int capacity = 4; // As suggested by the assignment
+  const int capacity = 4;
   
   Lawn lawn = lawn_new(0, 0);
   
-  // Initialize the MT-safe queue with a capacity
   Mtq q = mtq_new(capacity); 
 
   void *args[2] = { (void *)q, (void *)lawn };
 
-  // Launch threads using your thread module
   pthread_t *prods = thread_spawn(n, produce, args);
   pthread_t *cons = thread_spawn(n, consume, args);
 
-  // Wait for completion
   thread_wait(n, prods);
   thread_wait(n, cons);
 
-  // Cleanup using the wrapper's delete function
   mtq_del(q); 
   lawn_free(lawn);
   
